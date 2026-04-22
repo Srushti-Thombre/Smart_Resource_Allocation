@@ -1,4 +1,6 @@
-function HeroSection({ onAuthClick }) {
+import { Link } from 'react-router-dom';
+
+function HeroSection() {
   return (
     <section id="home" className="relative overflow-hidden py-16 lg:py-24">
       <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:items-center">
@@ -16,18 +18,18 @@ function HeroSection({ onAuthClick }) {
           </div>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <a
-              href="#about"
+            <Link
+              to="/register"
               className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#fbbf24] to-[#f59e0b] px-8 py-4 text-base font-semibold text-slate-950 shadow-lg shadow-amber-500/25 transition hover:-translate-y-0.5 sm:w-auto"
             >
               Get Started
-            </a>
-            <button
-              onClick={onAuthClick}
+            </Link>
+            <Link
+              to="/login"
               className="inline-flex w-full items-center justify-center rounded-full border border-white/15 bg-white/5 px-8 py-4 text-base font-semibold text-white transition hover:border-amber-300/30 hover:bg-white/10 sm:w-auto"
             >
               Login / Sign Up
-            </button>
+            </Link>
           </div>
 
           <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-xl shadow-slate-950/20">
