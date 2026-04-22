@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { mockRequests, categories } from '../data/mockData';
+import { useAuth } from '../context/AuthContext';
+import { categories } from '../data/mockData';
 import RequestCard from '../components/RequestCard';
 import { HiOutlineLightningBolt } from 'react-icons/hi';
 
 export default function RequestFeed() {
-  const [filterType, setFilterType] = useState('all');
+  const { user, requests } = useAuth();
+  const [filterType, setFilterType] = useState(user?.role === 'company' ? 'funding' : 'all');
   const [filterCategory, setFilterCategory] = useState('all');
   const { searchTerm, setSearchTerm } = useOutletContext();
 
-  const filteredRequests = mockRequests.filter(req => {
+  const filteredRequests = requests.filter(req => {
     const matchesType = filterType === 'all' || req.type === filterType;
     const matchesCategory = filterCategory === 'all' || req.category === filterCategory;
     const matchesSearch = req.title.toLowerCase().includes(searchTerm.toLowerCase()) || 

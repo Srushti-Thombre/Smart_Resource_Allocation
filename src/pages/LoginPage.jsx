@@ -13,15 +13,32 @@ export default function LoginPage() {
   const [selectedRole, setSelectedRole] = useState('volunteer');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({});
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  const validate = () => {
+    const newErrors = {};
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Invalid email format';
+    }
+    if (!password) {
+      newErrors.password = 'Password is required';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    login(selectedRole);
-    const from = location.state?.from?.pathname || `/${selectedRole}-dashboard`;
-    navigate(from, { replace: true });
+    if (validate()) {
+      login(selectedRole);
+      const from = location.state?.from?.pathname || `/${selectedRole}-dashboard`;
+      navigate(from, { replace: true });
+    }
   };
 
   return (
@@ -59,7 +76,7 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} noValidate className="space-y-5">
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Email Address</label>
               <div className="relative">
@@ -68,11 +85,17 @@ export default function LoginPage() {
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors({...errors, email: ''});
+                  }}
                   placeholder="name@example.com"
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10"
+                  className={`w-full rounded-2xl border bg-white/5 py-4 pl-12 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10 ${
+                    errors.email ? 'border-red-500/50' : 'border-white/10'
+                  }`}
                 />
               </div>
+              {errors.email && <p className="text-[10px] text-red-400 font-bold ml-1">{errors.email}</p>}
             </div>
 
             <div className="space-y-2">
@@ -86,11 +109,17 @@ export default function LoginPage() {
                   type="password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) setErrors({...errors, password: ''});
+                  }}
                   placeholder="••••••••"
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10"
+                  className={`w-full rounded-2xl border bg-white/5 py-4 pl-12 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10 ${
+                    errors.password ? 'border-red-500/50' : 'border-white/10'
+                  }`}
                 />
               </div>
+              {errors.password && <p className="text-[10px] text-red-400 font-bold ml-1">{errors.password}</p>}
             </div>
 
             <button

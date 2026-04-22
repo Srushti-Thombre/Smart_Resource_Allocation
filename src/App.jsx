@@ -28,10 +28,13 @@ import NGODirectory from './pages/NGODirectory';
 import CompanyDonations from './pages/CompanyDonations';
 import ProfilePage from './pages/ProfilePage';
 
+import NotificationToast from './components/NotificationToast';
+
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <NotificationToast />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
@@ -41,22 +44,27 @@ function App() {
 
           {/* Protected Dashboard Routes */}
           <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-            <Route path="/volunteer-dashboard" element={<VolunteerDashboard />} />
-            <Route path="/ngo-dashboard" element={<NGODashboard />} />
-            <Route path="/ngo-requests" element={<NGORequests />} />
-            <Route path="/ngo-volunteers" element={<NGOVolunteers />} />
-            <Route path="/ngo-donations" element={<NGODonations />} />
+            {/* Volunteer Specific */}
+            <Route path="/volunteer-dashboard" element={<ProtectedRoute allowedRoles={['volunteer']}><VolunteerDashboard /></ProtectedRoute>} />
+            <Route path="/tasks" element={<ProtectedRoute allowedRoles={['volunteer']}><MyTasks /></ProtectedRoute>} />
+            <Route path="/certificates" element={<ProtectedRoute allowedRoles={['volunteer']}><Certificates /></ProtectedRoute>} />
             
-            <Route path="/company-dashboard" element={<CompanyDashboard />} />
-            <Route path="/impact-feed" element={<ImpactFeed />} />
-            <Route path="/ngo-directory" element={<NGODirectory />} />
-            <Route path="/company-donations" element={<CompanyDonations />} />
+            {/* NGO Specific */}
+            <Route path="/ngo-dashboard" element={<ProtectedRoute allowedRoles={['ngo']}><NGODashboard /></ProtectedRoute>} />
+            <Route path="/ngo-requests" element={<ProtectedRoute allowedRoles={['ngo']}><NGORequests /></ProtectedRoute>} />
+            <Route path="/ngo-volunteers" element={<ProtectedRoute allowedRoles={['ngo']}><NGOVolunteers /></ProtectedRoute>} />
+            <Route path="/ngo-donations" element={<ProtectedRoute allowedRoles={['ngo']}><NGODonations /></ProtectedRoute>} />
+            <Route path="/create-request" element={<ProtectedRoute allowedRoles={['ngo']}><CreateRequest /></ProtectedRoute>} />
+            
+            {/* Company Specific */}
+            <Route path="/company-dashboard" element={<ProtectedRoute allowedRoles={['company']}><CompanyDashboard /></ProtectedRoute>} />
+            <Route path="/impact-feed" element={<ProtectedRoute allowedRoles={['company']}><ImpactFeed /></ProtectedRoute>} />
+            <Route path="/ngo-directory" element={<ProtectedRoute allowedRoles={['company']}><NGODirectory /></ProtectedRoute>} />
+            <Route path="/company-donations" element={<ProtectedRoute allowedRoles={['company']}><CompanyDonations /></ProtectedRoute>} />
 
+            {/* Shared */}
             <Route path="/feed" element={<RequestFeed />} />
-            <Route path="/tasks" element={<MyTasks />} />
-            <Route path="/certificates" element={<Certificates />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/create-request" element={<CreateRequest />} />
             <Route path="/donate" element={<DonationPage />} />
           </Route>
 

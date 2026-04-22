@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { useLocation, Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { HiOutlineBell, HiOutlineSearch, HiOutlineMenuAlt2 } from 'react-icons/hi';
 import NotificationPanel from '../components/NotificationPanel';
@@ -9,6 +9,11 @@ export default function DashboardLayout() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const { user } = useAuth();
+  const location = useLocation();
+
+  // Pages that REQUIRE a search bar
+  const showSearchOn = ['/feed', '/ngo-directory', '/impact-feed', '/ngo-requests', '/ngo-volunteers', '/ngo-donations', '/company-donations'];
+  const shouldShowSearch = showSearchOn.includes(location.pathname);
 
   return (
     <div className="min-h-screen bg-[#05122f] text-slate-100">
@@ -21,16 +26,18 @@ export default function DashboardLayout() {
             <button className="rounded-xl p-2 text-slate-400 hover:bg-white/5 hover:text-white lg:hidden">
               <HiOutlineMenuAlt2 className="h-6 w-6" />
             </button>
-            <div className="relative hidden sm:block">
-              <HiOutlineSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-              <input
-                type="text"
-                placeholder="Search resources, NGOs..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-80 rounded-2xl border border-white/5 bg-white/5 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10"
-              />
-            </div>
+            {shouldShowSearch && (
+              <div className="relative hidden sm:block animate-fade-in">
+                <HiOutlineSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Search resources, NGOs..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-80 rounded-2xl border border-white/5 bg-white/5 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10"
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-6">

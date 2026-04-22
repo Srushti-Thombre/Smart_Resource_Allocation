@@ -1,16 +1,23 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { HiOutlineUser, HiOutlineMail, HiOutlineLockClosed, HiOutlineBell, HiOutlineShieldCheck, HiOutlineGlobeAlt, HiOutlinePhone } from 'react-icons/hi';
+import { HiOutlineUser, HiOutlineMail, HiOutlineLockClosed, HiOutlineBell, HiOutlineShieldCheck, HiOutlineGlobeAlt, HiOutlinePhone, HiOutlineLocationMarker, HiOutlineCheckCircle } from 'react-icons/hi';
 import { skillOptions } from '../data/mockData';
 
 export default function ProfilePage() {
   const { user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
   const [selectedSkills, setSelectedSkills] = useState(user?.skills || []);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     phone: user?.phone || '+91 98765 43210',
     bio: user?.bio || '',
+    address: user?.address || '',
+    registrationId: user?.registrationId || 'NGO-IND-2026-991',
+    website: user?.website || 'https://ngo-portal.org',
+    csrFocus: user?.csrFocus || 'Education, Sustainability',
+    budget: user?.budget || '5000000',
   });
 
   const toggleSkill = (skill) => {
@@ -20,8 +27,15 @@ export default function ProfilePage() {
   };
 
   const handleSave = () => {
-    updateUser({ ...formData, skills: selectedSkills });
-    // In a real app, you'd show a success toast here
+    setIsSaving(true);
+    // Simulate API delay
+    setTimeout(() => {
+      updateUser({ ...formData, skills: selectedSkills });
+      setIsSaving(false);
+      setShowSuccess(true);
+      // Hide success message after 3 seconds
+      setTimeout(() => setShowSuccess(false), 3000);
+    }, 800);
   };
 
   const tabs = [
@@ -48,12 +62,31 @@ export default function ProfilePage() {
           </button>
           <button 
             onClick={handleSave}
-            className="px-8 py-3 rounded-2xl bg-amber-400 text-sm font-bold text-slate-950 shadow-lg shadow-amber-400/20 hover:-translate-y-1 transition"
+            disabled={isSaving}
+            className={`px-8 py-3 rounded-2xl text-sm font-bold flex items-center gap-2 transition-all duration-300 ${
+              isSaving 
+                ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
+                : 'bg-amber-400 text-slate-950 shadow-lg shadow-amber-400/20 hover:-translate-y-1'
+            }`}
           >
-            Save Changes
+            {isSaving ? (
+              <>
+                <div className="h-4 w-4 border-2 border-slate-600 border-t-slate-400 rounded-full animate-spin" />
+                Saving...
+              </>
+            ) : 'Save Changes'}
           </button>
         </div>
       </div>
+
+      {showSuccess && (
+        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-50 animate-bounce-in">
+          <div className="flex items-center gap-3 bg-emerald-500 text-white px-8 py-4 rounded-3xl shadow-2xl shadow-emerald-500/20 border border-white/20">
+            <HiOutlineCheckCircle className="h-6 w-6" />
+            <span className="font-bold tracking-tight">Profile updated successfully!</span>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-10 lg:grid-cols-[280px_1fr]">
         {/* Sidebar Tabs */}
@@ -153,7 +186,8 @@ export default function ProfilePage() {
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Registration ID</label>
                       <input 
-                        defaultValue="NGO-IND-2026-991"
+                        value={formData.registrationId}
+                        onChange={(e) => setFormData({...formData, registrationId: e.target.value})}
                         className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 px-6 text-sm text-white outline-none focus:border-amber-400/30 transition" 
                       />
                     </div>
@@ -162,7 +196,20 @@ export default function ProfilePage() {
                       <div className="relative">
                         <HiOutlineGlobeAlt className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 h-5 w-5" />
                         <input 
-                          defaultValue="https://ngo-portal.org"
+                          value={formData.website}
+                          onChange={(e) => setFormData({...formData, website: e.target.value})}
+                          className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-sm text-white outline-none focus:border-amber-400/30 transition" 
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Organization Address (for live maps)</label>
+                      <div className="relative">
+                        <HiOutlineLocationMarker className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 h-5 w-5" />
+                        <input 
+                          value={formData.address}
+                          onChange={(e) => setFormData({...formData, address: e.target.value})}
+                          placeholder="Enter your physical office address..."
                           className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-sm text-white outline-none focus:border-amber-400/30 transition" 
                         />
                       </div>
@@ -173,20 +220,35 @@ export default function ProfilePage() {
 
               {user?.role === 'company' && (
                 <div className="space-y-6 pt-6 border-t border-white/5">
-                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">CSR Focus Area</label>
-                    <input 
-                      defaultValue="Education, Sustainability"
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 px-6 text-sm text-white outline-none focus:border-amber-400/30 transition" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Annual CSR Budget (₹)</label>
-                    <input 
-                      type="number"
-                      defaultValue="5000000"
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 px-6 text-sm text-white outline-none focus:border-amber-400/30 transition" 
-                    />
+                   <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">CSR Focus Area</label>
+                      <input 
+                        value={formData.csrFocus}
+                        onChange={(e) => setFormData({...formData, csrFocus: e.target.value})}
+                        className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 px-6 text-sm text-white outline-none focus:border-amber-400/30 transition" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Headquarters Address</label>
+                      <div className="relative">
+                        <HiOutlineLocationMarker className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 h-5 w-5" />
+                        <input 
+                          value={formData.address}
+                          onChange={(e) => setFormData({...formData, address: e.target.value})}
+                          className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-sm text-white outline-none focus:border-amber-400/30 transition" 
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Annual CSR Budget (₹)</label>
+                      <input 
+                        type="number"
+                        value={formData.budget}
+                        onChange={(e) => setFormData({...formData, budget: e.target.value})}
+                        className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 px-6 text-sm text-white outline-none focus:border-amber-400/30 transition" 
+                      />
+                    </div>
                   </div>
                 </div>
               )}

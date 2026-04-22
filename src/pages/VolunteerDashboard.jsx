@@ -2,23 +2,27 @@ import { HiOutlineUserGroup, HiOutlineClock, HiOutlineLibrary, HiOutlinePlusCirc
 import StatsCard from '../components/StatsCard';
 import RequestCard from '../components/RequestCard';
 import { useAuth } from '../context/AuthContext';
-import { mockRequests } from '../data/mockData';
 import { Link } from 'react-router-dom';
 
 export default function VolunteerDashboard() {
-  const { user } = useAuth();
+  const { user, requests } = useAuth();
   
-  // Filter nearby/recommended requests based on user skills
-  const recommendedRequests = mockRequests
+  // Filter nearby/recommended requests based on user skills, sorted by most recent
+  const recommendedRequests = requests
     .filter(r => r.type === 'volunteer')
     .sort((a, b) => {
+      // Prioritize by date (newest first) then by skill match
+      const dateA = typeof a.id === 'number' && a.id > 1000 ? a.id : 0;
+      const dateB = typeof b.id === 'number' && b.id > 1000 ? b.id : 0;
+      if (dateA !== dateB) return dateB - dateA;
+
       const aMatches = a.skillsNeeded?.some(s => user?.skills?.includes(s));
       const bMatches = b.skillsNeeded?.some(s => user?.skills?.includes(s));
       if (aMatches && !bMatches) return -1;
       if (!aMatches && bMatches) return 1;
       return 0;
     })
-    .slice(0, 4); // Show up to 4
+    .slice(0, 6); // Show up to 6
 
   return (
     <div className="space-y-10">

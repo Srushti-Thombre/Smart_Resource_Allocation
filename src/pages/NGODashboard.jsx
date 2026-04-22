@@ -1,17 +1,75 @@
-import { HiOutlineUserGroup, HiOutlineCash, HiOutlineClipboardList, HiOutlinePlus } from 'react-icons/hi';
+import { useState } from 'react';
+import { HiOutlineUserGroup, HiOutlineCash, HiOutlineClipboardList, HiOutlinePlus, HiOutlineCheck, HiOutlineX } from 'react-icons/hi';
 import StatsCard from '../components/StatsCard';
 import { useAuth } from '../context/AuthContext';
-import { mockRequests } from '../data/mockData';
 import { Link } from 'react-router-dom';
+import MapDisplay from '../components/MapDisplay';
 
 export default function NGODashboard() {
-  const { user } = useAuth();
+  const { user, requests, applications, updateApplicationStatus } = useAuth();
+  const [selectedApp, setSelectedApp] = useState(null);
   
   // My active requests
-  const myRequests = mockRequests.filter(r => r.ngoId === user?.id);
+  const myRequests = requests.filter(r => r.ngoId === user?.id);
+
+  // My applications
+  const myApplications = applications.filter(app => app.ngoId === user?.id);
+
+  const handleReview = (app, status) => {
+    updateApplicationStatus(app.id, status);
+    setSelectedApp(null);
+  };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 relative">
+      {/* Review Modal */}
+      {selectedApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-md rounded-[2.5rem] border border-white/10 bg-slate-900 p-8 shadow-2xl animate-bounce-in">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-2xl font-bold text-white shadow-glow">
+                {selectedApp.applicantAvatar || selectedApp.applicantName[0]}
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">{selectedApp.applicantName}</h3>
+                <p className="text-sm text-slate-400">Applying for: <span className="text-amber-200">{selectedApp.requestTitle}</span></p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="rounded-2xl bg-white/5 p-4 border border-white/5">
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Message from Volunteer</p>
+                <p className="text-sm text-slate-300 leading-relaxed italic">
+                  "I have a background in this field and would love to contribute my time to help the community through this initiative."
+                </p>
+              </div>
+
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => handleReview(selectedApp, 'rejected')}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/5 py-4 text-sm font-bold text-red-400 hover:bg-red-500/10 transition"
+                >
+                  <HiOutlineX className="h-5 w-5" />
+                  Decline
+                </button>
+                <button 
+                  onClick={() => handleReview(selectedApp, 'accepted')}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-4 text-sm font-bold text-slate-950 hover:shadow-lg hover:shadow-emerald-500/20 transition"
+                >
+                  <HiOutlineCheck className="h-5 w-5" />
+                  Approve
+                </button>
+              </div>
+              <button 
+                onClick={() => setSelectedApp(null)}
+                className="w-full text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 hover:text-white transition"
+              >
+                Decide Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">{user?.name}</h1>
@@ -29,9 +87,9 @@ export default function NGODashboard() {
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <StatsCard 
           label="Volunteers Engaged" 
-          value={user?.volunteersEngaged || 0} 
+          value={(user?.volunteersEngaged || 0) + myApplications.filter(a => a.status === 'accepted').length} 
           icon={HiOutlineUserGroup} 
-          trend="+12 this week"
+          trend={`+${myApplications.filter(a => a.status === 'pending').length} pending`}
           color="purple"
         />
         <StatsCard 
@@ -43,7 +101,7 @@ export default function NGODashboard() {
         />
         <StatsCard 
           label="Active Requests" 
-          value={user?.activeRequests || 0} 
+          value={myRequests.length} 
           icon={HiOutlineClipboardList} 
           color="blue"
         />
@@ -81,9 +139,9 @@ export default function NGODashboard() {
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
                           <div className="h-1.5 w-24 rounded-full bg-white/5 overflow-hidden">
-                            <div className="h-full bg-amber-400" style={{ width: `${progress}%` }} />
+                            <div className="h-full bg-amber-400" style={{ width: `${Math.min(progress || 0, 100)}%` }} />
                           </div>
-                          <span className="text-xs font-bold text-slate-400">{Math.round(progress)}%</span>
+                          <span className="text-xs font-bold text-slate-400">{Math.round(progress || 0)}%</span>
                         </div>
                       </td>
                       <td className="px-6 py-5">
@@ -100,21 +158,39 @@ export default function NGODashboard() {
           </div>
         </div>
 
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold text-white">Recent Applications</h2>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-4 rounded-3xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/[0.07]">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 border border-white/10" />
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-white">Applicant {i}</p>
-                  <p className="text-xs text-slate-500">Applied for: English Teaching</p>
+        <div className="space-y-8">
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-white">Registered Location</h2>
+            <MapDisplay address={user?.address || '12, Dharavi Main Road, near Sion Station, Mumbai'} />
+          </div>
+
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-white">Recent Applications</h2>
+            <div className="space-y-4">
+              {myApplications.filter(a => a.status === 'pending').length > 0 ? (
+                myApplications.filter(a => a.status === 'pending').map((app) => (
+                  <div key={app.id} className="flex items-center gap-4 rounded-3xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/[0.07]">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 border border-white/10 flex items-center justify-center text-xs font-bold text-white">
+                      {app.applicantAvatar || app.applicantName[0]}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-white">{app.applicantName}</p>
+                      <p className="text-[11px] text-slate-500">Applied for: {app.requestTitle}</p>
+                    </div>
+                    <button 
+                      onClick={() => setSelectedApp(app)}
+                      className="rounded-xl bg-amber-400/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-200 hover:bg-amber-400/20 transition"
+                    >
+                      Review
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="py-10 text-center rounded-3xl border border-dashed border-white/5 text-slate-500 text-sm">
+                  {myApplications.length > 0 ? 'All applications reviewed!' : 'No new applications yet.'}
                 </div>
-                <button className="rounded-xl bg-amber-400/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-200 hover:bg-amber-400/20">
-                  Review
-                </button>
-              </div>
-            ))}
+              )}
+            </div>
           </div>
         </div>
       </div>

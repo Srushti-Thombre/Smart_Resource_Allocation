@@ -21,18 +21,55 @@ export default function RegisterPage() {
     phone: '',
   });
   
+  const [errors, setErrors] = useState({});
   const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = 'Full name is required';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email address is invalid';
+    }
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!/^\+?[\d\s-]{10,}$/.test(formData.phone)) {
+      newErrors.phone = 'Invalid phone number format';
+    }
+    
+    if (selectedRole === 'volunteer' && !formData.city.trim()) {
+      newErrors.city = 'City is required';
+    }
+    if (selectedRole !== 'volunteer' && !formData.orgName.trim()) {
+      newErrors.orgName = 'Organization name is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    register(selectedRole, formData);
-    navigate(`/${selectedRole}-dashboard`);
+    if (validateForm()) {
+      register(selectedRole, formData);
+      navigate(`/${selectedRole}-dashboard`);
+    }
   };
 
   return (
@@ -70,7 +107,7 @@ export default function RegisterPage() {
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} noValidate className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
@@ -84,9 +121,12 @@ export default function RegisterPage() {
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="John Doe"
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10"
+                    className={`w-full rounded-2xl border bg-white/5 py-4 pl-12 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10 ${
+                      errors.name ? 'border-red-500/50' : 'border-white/10'
+                    }`}
                   />
                 </div>
+                {errors.name && <p className="text-[10px] text-red-400 font-bold ml-1">{errors.name}</p>}
               </div>
 
               <div className="space-y-2">
@@ -105,9 +145,16 @@ export default function RegisterPage() {
                     value={selectedRole === 'volunteer' ? formData.city : formData.orgName}
                     onChange={handleInputChange}
                     placeholder={selectedRole === 'volunteer' ? 'e.g. Mumbai' : 'EcoCare Foundation'}
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10"
+                    className={`w-full rounded-2xl border bg-white/5 py-4 pl-12 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10 ${
+                      (selectedRole === 'volunteer' ? errors.city : errors.orgName) ? 'border-red-500/50' : 'border-white/10'
+                    }`}
                   />
                 </div>
+                {(selectedRole === 'volunteer' ? errors.city : errors.orgName) && (
+                  <p className="text-[10px] text-red-400 font-bold ml-1">
+                    {selectedRole === 'volunteer' ? errors.city : errors.orgName}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2 md:col-span-2">
@@ -121,9 +168,12 @@ export default function RegisterPage() {
                     value={formData.email}
                     onChange={handleInputChange}
                     placeholder="you@example.com"
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10"
+                    className={`w-full rounded-2xl border bg-white/5 py-4 pl-12 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10 ${
+                      errors.email ? 'border-red-500/50' : 'border-white/10'
+                    }`}
                   />
                 </div>
+                {errors.email && <p className="text-[10px] text-red-400 font-bold ml-1">{errors.email}</p>}
               </div>
 
               <div className="space-y-2 md:col-span-2">
@@ -137,9 +187,12 @@ export default function RegisterPage() {
                     value={formData.phone}
                     onChange={handleInputChange}
                     placeholder="+91 98765 43210"
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10"
+                    className={`w-full rounded-2xl border bg-white/5 py-4 pl-12 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10 ${
+                      errors.phone ? 'border-red-500/50' : 'border-white/10'
+                    }`}
                   />
                 </div>
+                {errors.phone && <p className="text-[10px] text-red-400 font-bold ml-1">{errors.phone}</p>}
               </div>
 
               <div className="space-y-2 md:col-span-2">
@@ -153,9 +206,12 @@ export default function RegisterPage() {
                     value={formData.password}
                     onChange={handleInputChange}
                     placeholder="••••••••"
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10"
+                    className={`w-full rounded-2xl border bg-white/5 py-4 pl-12 pr-4 text-sm outline-none transition focus:border-amber-300/30 focus:bg-white/10 ${
+                      errors.password ? 'border-red-500/50' : 'border-white/10'
+                    }`}
                   />
                 </div>
+                {errors.password && <p className="text-[10px] text-red-400 font-bold ml-1">{errors.password}</p>}
               </div>
             </div>
 

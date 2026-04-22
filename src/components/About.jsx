@@ -6,7 +6,7 @@ function About() {
       <div className="grid gap-10 lg:grid-cols-[1fr_0.9fr] lg:items-center">
         <div className="space-y-6">
           <p className="text-sm uppercase tracking-[0.3em] text-amber-200">About ImpactBridge</p>
-          <h2 className="text-3xl font-semibold text-white sm:text-4xl">
+          <h2 className="mt-4 text-3xl font-bold sm:text-4xl text-gradient">
             A smarter way to coordinate aid, volunteers, and corporate giving.
           </h2>
           <p className="max-w-xl text-base leading-8 text-slate-300">

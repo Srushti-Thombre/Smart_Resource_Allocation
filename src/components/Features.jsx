@@ -22,7 +22,7 @@ function Features() {
     <section id="features" className="mt-20 space-y-10">
       <div className="max-w-3xl">
         <p className="text-sm uppercase tracking-[0.3em] text-amber-200">Platform features</p>
-        <h2 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">
+        <h2 className="mt-4 text-3xl font-semibold sm:text-4xl text-gradient">
           Powerful tools for trust and collaboration.
         </h2>
         <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">

@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   HiOutlineViewGrid, 
   HiOutlineClipboardList, 
@@ -16,6 +16,12 @@ import { useAuth } from '../context/AuthContext';
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   const menuItems = {
     volunteer: [
@@ -80,7 +86,7 @@ export default function Sidebar() {
             Profile Settings
           </Link>
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-red-400/80 transition hover:bg-red-400/5 hover:text-red-400"
           >
             <HiOutlineLogout className="h-5 w-5" />
