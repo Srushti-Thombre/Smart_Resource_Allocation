@@ -4,6 +4,7 @@ import StatsCard from '../components/StatsCard';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import MapDisplay from '../components/MapDisplay';
+import HeatmapDisplay from '../components/HeatmapDisplay';
 
 export default function NGODashboard() {
   const { user, requests, applications, updateApplicationStatus } = useAuth();
@@ -160,8 +161,8 @@ export default function NGODashboard() {
 
         <div className="space-y-8">
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-white">Registered Location</h2>
-            <MapDisplay address={user?.address || '12, Dharavi Main Road, near Sion Station, Mumbai'} />
+            <h2 className="text-xl font-bold text-white">Regional Demand Analysis</h2>
+            <HeatmapDisplay />
           </div>
 
           <div className="space-y-6">
