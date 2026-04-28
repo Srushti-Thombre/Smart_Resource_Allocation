@@ -60,3 +60,6 @@ Tailored, role-specific experiences for the three pillars of social impact:
 *   **Impact Feed:** Corporate transparency dashboard with detailed mission reports.
 
 **Developed with ❤️ for the GDG Solution Challenge.**
+
+Deployment Link:
+admirable-rugelach-cc5193.netlify.app
