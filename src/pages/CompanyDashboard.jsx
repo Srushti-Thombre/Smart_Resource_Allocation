@@ -1,315 +1,405 @@
-import { useState } from 'react';
-import { HiOutlineCash, HiOutlineLibrary, HiOutlineDocumentText, HiOutlineTrendingUp, HiOutlineHeart, HiCheckCircle, HiOutlineLocationMarker, HiOutlineX } from 'react-icons/hi';
+import { useState, useEffect } from 'react';
+import { HiOutlineCash, HiOutlineHeart, HiOutlineClipboard, HiOutlineStar, HiOutlineX } from 'react-icons/hi';
 import StatsCard from '../components/StatsCard';
 import { useAuth } from '../context/AuthContext';
 
+const API_BASE_URL = 'http://localhost:5000/api';
+const COMPANY_NAME = 'ABC Corp';
+
 export default function CompanyDashboard() {
   const { user } = useAuth();
+  const [fundingRequests, setFundingRequests] = useState([]);
+  const [donationHistory, setDonationHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [donateAmount, setDonateAmount] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [showDonateModal, setShowDonateModal] = useState(false);
   const [step, setStep] = useState(1);
+  const [donateAmount, setDonateAmount] = useState(50000);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('credit_card');
 
-  // Mock data for funding requests
-  const fundingRequests = [
-    {
-      id: 1,
-      ngoName: 'Hope Foundation',
-      purpose: 'Scholarship for underprivileged students',
-      amountNeeded: 500000,
-      amountRaised: 320000,
-      beneficiaries: 50
-    },
-    {
-      id: 2,
-      ngoName: 'Sahara Relief Trust',
-      purpose: 'Disaster relief and rehabilitation',
-      amountNeeded: 1000000,
-      amountRaised: 650000,
-      beneficiaries: 200
-    },
-    {
-      id: 3,
-      ngoName: 'Green Earth Initiative',
-      purpose: 'Environmental conservation project',
-      amountNeeded: 300000,
-      amountRaised: 180000,
-      beneficiaries: 100
-    },
-    {
-      id: 4,
-      ngoName: 'Health Connect',
-      purpose: 'Rural healthcare camps',
-      amountNeeded: 750000,
-      amountRaised: 450000,
-      beneficiaries: 1000
+  // Fetch funding requests and donations on mount
+  useEffect(() => {
+    fetchFundingRequests();
+    fetchDonationHistory();
+  }, []);
+
+  const fetchFundingRequests = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/requests?type=funding`);
+      const data = await response.json();
+      setFundingRequests(data.data || []);
+    } catch (error) {
+      console.error('Error fetching funding requests:', error);
+      setMessage({ type: 'error', text: 'Failed to load funding requests' });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  // Mock data for donation history
-  const donationHistory = [
-    { id: 1, ngoName: 'Hope Foundation', amount: 250000, date: '2024-04-15', purpose: 'Education Initiative' },
-    { id: 2, ngoName: 'Sahara Relief Trust', amount: 500000, date: '2024-04-10', purpose: 'Emergency Relief' },
-    { id: 3, ngoName: 'Green Earth Initiative', amount: 150000, date: '2024-03-20', purpose: 'Tree Planting' },
-    { id: 4, ngoName: 'Health Connect', amount: 300000, date: '2024-03-05', purpose: 'Healthcare' }
-  ];
+  const fetchDonationHistory = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/donate?companyName=${COMPANY_NAME}`);
+      const data = await response.json();
+      setDonationHistory(data.data || []);
+    } catch (error) {
+      console.error('Error fetching donation history:', error);
+    }
+  };
 
-  const totalDonated = donationHistory.reduce((sum, d) => sum + d.amount, 0);
+  const openDonateModal = (request) => {
+    setSelectedRequest(request);
+    setShowDonateModal(true);
+    setStep(1);
+    setDonateAmount(50000);
+    setPaymentMethod('credit_card');
+  };
 
-  const handleDonate = () => {
-    if (!donateAmount || isProcessing) return;
+  const handleDonate = async () => {
+    if (step < 3) {
+      setStep(step + 1);
+      return;
+    }
+
     setIsProcessing(true);
-    setTimeout(() => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/donate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyName: COMPANY_NAME,
+          ngoName: selectedRequest.ngoName,
+          amount: donateAmount,
+          requestId: selectedRequest.id,
+          paymentMethod: paymentMethod
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: 'Donation processed successfully! Thank you for your support.' });
+        setShowDonateModal(false);
+        setStep(1);
+        // Refresh donations and requests
+        fetchDonationHistory();
+        fetchFundingRequests();
+        // Clear message after 3 seconds
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to process donation' });
+      }
+    } catch (error) {
+      console.error('Error processing donation:', error);
+      setMessage({ type: 'error', text: 'Network error. Please try again.' });
+    } finally {
       setIsProcessing(false);
-      setStep(3);
-    }, 2000);
+    }
   };
 
   const closeDonateModal = () => {
+    setShowDonateModal(false);
     setSelectedRequest(null);
-    setDonateAmount('');
     setStep(1);
-    setIsProcessing(false);
   };
+
+  const totalDonated = donationHistory.reduce((sum, d) => sum + d.amount, 0);
 
   return (
     <div className="space-y-10">
+      {/* Success/Error Message */}
+      {message.text && (
+        <div className={`rounded-3xl p-6 border-l-4 ${
+          message.type === 'success' 
+            ? 'bg-emerald-500/10 border-emerald-500 text-emerald-300' 
+            : 'bg-red-500/10 border-red-500 text-red-300'
+        }`}>
+          <p className="font-bold">{message.text}</p>
+        </div>
+      )}
+
       {/* Donation Modal */}
-      {selectedRequest && (
+      {showDonateModal && selectedRequest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md">
-          <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-slate-900 overflow-hidden shadow-2xl">
-            <div className="bg-gradient-to-r from-amber-400 to-orange-500 p-8 text-slate-950">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-2xl font-bold">Make a Contribution</h3>
-                  <p className="text-sm font-medium opacity-80">Supporting {selectedRequest.ngoName}</p>
-                </div>
-                <button onClick={closeDonateModal} className="p-2">
-                  <HiOutlineX className="h-6 w-6" />
-                </button>
-              </div>
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 px-8 py-6">
+              <h2 className="text-2xl font-bold text-white">Donate to {selectedRequest.ngoName}</h2>
+              <button 
+                onClick={closeDonateModal}
+                className="rounded-xl p-2 hover:bg-white/10"
+              >
+                <HiOutlineX className="h-6 w-6 text-slate-400" />
+              </button>
             </div>
 
-            <div className="p-8">
+            <div className="p-8 space-y-6">
+              {/* Step Indicator */}
+              <div className="flex justify-between mb-8">
+                {[1, 2, 3].map((s) => (
+                  <div key={s} className={`h-1 flex-1 mx-1 rounded-full ${s <= step ? 'bg-amber-400' : 'bg-white/10'}`} />
+                ))}
+              </div>
+
+              {/* Step 1: Amount Selection */}
               {step === 1 && (
-                <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-white mb-4">Select Donation Amount</h3>
+                  <div className="space-y-3">
+                    {[50000, 100000, 500000].map((amount) => (
+                      <button
+                        key={amount}
+                        onClick={() => setDonateAmount(amount)}
+                        className={`w-full rounded-2xl border-2 p-4 text-left font-bold uppercase tracking-widest transition ${
+                          donateAmount === amount
+                            ? 'border-amber-400 bg-amber-400/10 text-amber-300'
+                            : 'border-white/10 bg-white/5 text-white hover:border-white/20'
+                        }`}
+                      >
+                        ₹{amount.toLocaleString()}
+                      </button>
+                    ))}
+                  </div>
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Initiative</label>
-                    <p className="text-white font-bold">{selectedRequest.purpose}</p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Select Amount (INR)</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
-                      <input 
-                        type="number"
-                        value={donateAmount}
-                        onChange={(e) => setDonateAmount(e.target.value)}
-                        placeholder="Enter amount"
-                        className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 pl-10 text-2xl font-bold text-white outline-none focus:border-amber-400/30"
-                      />
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      {['50000', '100000', '500000'].map(amt => (
-                        <button 
-                          key={amt}
-                          onClick={() => setDonateAmount(amt)}
-                          className={`py-3 rounded-xl border transition font-bold text-xs ${donateAmount === amt ? 'bg-amber-400 border-amber-400 text-slate-950' : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
-                        >
-                          ₹{Number(amt).toLocaleString()}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4">
-                    <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-2 mb-2">
-                      <HiCheckCircle className="h-3 w-3" />
-                      Tax Benefits
-                    </p>
-                    <p className="text-xs text-slate-400">Section 80G eligible - Get instant receipt</p>
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <button onClick={closeDonateModal} className="flex-1 py-3 rounded-2xl border border-white/10 text-xs font-bold text-white uppercase tracking-widest hover:bg-white/5">Cancel</button>
-                    <button 
-                      onClick={() => setStep(2)}
-                      disabled={!donateAmount}
-                      className="flex-1 py-3 rounded-2xl bg-white text-slate-950 text-xs font-bold uppercase tracking-widest hover:bg-amber-400 transition disabled:opacity-50"
-                    >
-                      Continue
-                    </button>
+                    <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Or Enter Custom Amount</label>
+                    <input
+                      type="number"
+                      value={donateAmount}
+                      onChange={(e) => setDonateAmount(parseInt(e.target.value) || 0)}
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-amber-400/30 focus:bg-white/10"
+                    />
                   </div>
                 </div>
               )}
 
+              {/* Step 2: Payment Method */}
               {step === 2 && (
-                <div className="space-y-6">
-                   <div className="flex items-center justify-between mb-6">
-                     <button onClick={() => setStep(1)} className="text-xs font-bold text-amber-200 uppercase">← Back</button>
-                     <span className="text-xs font-bold text-slate-500">STEP 2 OF 2</span>
-                   </div>
-
-                   <div>
-                      <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Payment Method</label>
-                      {['Corporate Credit Card', 'Bank Transfer (NEFT)', 'CSR Wallet'].map((method, i) => (
-                        <div key={i} className="flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-white/5 mb-3 cursor-pointer hover:border-amber-400/30">
-                          <div className="h-5 w-5 rounded-full border-2 flex items-center justify-center" style={{borderColor: i === 0 ? '#fbbf24' : '#e2e8f0'}}>
-                            {i === 0 && <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />}
-                          </div>
-                          <span className="text-sm font-bold text-white">{method}</span>
-                        </div>
-                      ))}
-                   </div>
-
-                   <button 
-                     onClick={handleDonate}
-                     disabled={isProcessing}
-                     className="w-full py-4 rounded-2xl bg-amber-400 text-slate-950 text-sm font-bold uppercase tracking-widest shadow-lg shadow-amber-400/20 hover:shadow-xl transition disabled:opacity-50 flex items-center justify-center gap-2"
-                   >
-                     {isProcessing ? <div className="h-5 w-5 border-2 border-slate-950/30 border-t-slate-950 rounded-full animate-spin" /> : `Pay ₹${Number(donateAmount).toLocaleString()}`}
-                   </button>
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-white mb-4">Select Payment Method</h3>
+                  <div className="space-y-3">
+                    {['credit_card', 'bank_transfer', 'csr_wallet'].map((method) => (
+                      <label
+                        key={method}
+                        className={`flex items-center p-4 rounded-2xl border-2 cursor-pointer transition ${
+                          paymentMethod === method
+                            ? 'border-amber-400 bg-amber-400/10'
+                            : 'border-white/10 bg-white/5 hover:border-white/20'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="payment"
+                          value={method}
+                          checked={paymentMethod === method}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                          className="mr-3"
+                        />
+                        <span className="text-sm font-bold text-white uppercase tracking-widest">
+                          {method === 'credit_card' ? 'Credit Card' : method === 'bank_transfer' ? 'Bank Transfer' : 'CSR Wallet'}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               )}
 
+              {/* Step 3: Confirmation */}
               {step === 3 && (
-                <div className="py-8 text-center space-y-6">
-                   <div className="h-20 w-20 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
-                     <HiCheckCircle className="h-10 w-10" />
-                   </div>
-                   <div>
-                     <h3 className="text-2xl font-bold text-white">Success!</h3>
-                     <p className="text-slate-400 mt-2">Thank you for your donation of ₹{Number(donateAmount).toLocaleString()}.</p>
-                   </div>
-                   <button 
-                    onClick={closeDonateModal}
-                    className="w-full py-3 rounded-2xl border border-white/10 text-xs font-bold text-white uppercase tracking-widest hover:bg-white/5 transition"
-                   >
-                     Return to Dashboard
-                   </button>
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-white mb-4">Confirm Donation</h3>
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-6 space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">NGO Name:</span>
+                      <span className="font-bold text-white">{selectedRequest.ngoName}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">Amount:</span>
+                      <span className="font-bold text-amber-400">₹{donateAmount.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm border-t border-white/10 pt-3">
+                      <span className="text-slate-400">Payment Method:</span>
+                      <span className="font-bold text-white">
+                        {paymentMethod === 'credit_card' ? 'Credit Card' : paymentMethod === 'bank_transfer' ? 'Bank Transfer' : 'CSR Wallet'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4">
+                    <p className="text-sm text-emerald-300">✓ Your donation will be processed and a tax receipt will be generated.</p>
+                  </div>
                 </div>
               )}
+
+              {/* Navigation Buttons */}
+              <div className="flex gap-4 pt-4">
+                {step > 1 && (
+                  <button 
+                    onClick={() => setStep(step - 1)}
+                    disabled={isProcessing}
+                    className="flex-1 rounded-2xl border border-white/10 py-3 text-sm font-bold uppercase tracking-widest text-white hover:bg-white/5 transition disabled:opacity-50"
+                  >
+                    Back
+                  </button>
+                )}
+                <button 
+                  onClick={closeDonateModal}
+                  disabled={isProcessing}
+                  className="flex-1 rounded-2xl border border-white/10 py-3 text-sm font-bold uppercase tracking-widest text-white hover:bg-white/5 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleDonate}
+                  disabled={isProcessing || donateAmount <= 0}
+                  className="flex-1 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 py-3 text-sm font-bold uppercase tracking-widest text-slate-950 shadow-lg shadow-amber-500/20 hover:shadow-xl transition disabled:opacity-50"
+                >
+                  {isProcessing ? 'Processing...' : step === 3 ? 'Confirm Donation' : 'Next'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* Welcome Card */}
-      <div className="rounded-3xl bg-gradient-to-br from-emerald-600/20 to-green-600/20 border border-emerald-500/20 p-8 shadow-lg shadow-emerald-500/10">
-        <h1 className="text-3xl font-bold text-white mb-2">Make a Meaningful Impact</h1>
-        <p className="text-slate-300">Through your contributions, you create meaningful change in communities. Explore funding opportunities aligned with your corporate values.</p>
+      <div className="rounded-3xl bg-gradient-to-br from-emerald-600/20 to-teal-600/20 border border-emerald-500/20 p-8 shadow-lg shadow-emerald-500/10">
+        <h1 className="text-3xl font-bold text-white mb-2">Welcome, {COMPANY_NAME}! 💼</h1>
+        <p className="text-slate-300">Make a lasting impact through strategic donations and CSR initiatives.</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard 
           label="Total Donated" 
-          value={`₹${(totalDonated / 100000).toFixed(2)}L`} 
+          value={`₹${(totalDonated / 100000).toFixed(1)}L`}
           icon={HiOutlineCash} 
-          trend="+₹2,50,000 this year"
-          color="green"
+          trend="+₹50K this month"
+          color="amber"
         />
         <StatsCard 
           label="NGOs Supported" 
           value={new Set(donationHistory.map(d => d.ngoName)).size} 
-          icon={HiOutlineLibrary} 
-          color="purple"
+          icon={HiOutlineHeart} 
+          color="emerald"
         />
         <StatsCard 
           label="Tax Receipts" 
           value={donationHistory.length} 
-          icon={HiOutlineDocumentText} 
+          icon={HiOutlineClipboard} 
           color="blue"
         />
         <StatsCard 
           label="Impact Score" 
           value="9.2/10" 
-          icon={HiOutlineTrendingUp} 
-          color="amber"
+          icon={HiOutlineStar} 
+          trend="Excellent"
+          color="purple"
         />
       </div>
 
       {/* Funding Requests Section */}
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-white">Funding Requests</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {fundingRequests.map((request) => (
-            <div key={request.id} className="rounded-3xl border border-white/10 bg-white/5 overflow-hidden hover:bg-white/[0.08] hover:border-white/20 transition-all shadow-lg hover:shadow-xl hover:shadow-white/5 p-6 space-y-4">
-              <div>
-                <h3 className="text-lg font-bold text-white mb-1">{request.ngoName}</h3>
-                <p className="text-sm text-slate-400">{request.purpose}</p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400">Progress</span>
-                  <span className="font-bold text-amber-400">₹{(request.amountRaised / 100000).toFixed(1)}L / ₹{(request.amountNeeded / 100000).toFixed(1)}L</span>
-                </div>
-                <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-amber-400 to-amber-500" style={{ width: `${(request.amountRaised / request.amountNeeded) * 100}%` }} />
-                </div>
-                <p className="text-xs text-slate-500">{request.beneficiaries} people will benefit</p>
-              </div>
-
-              <button 
-                onClick={() => setSelectedRequest(request)}
-                className="w-full rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 hover:shadow-xl transition"
-              >
-                Donate Now
-              </button>
-            </div>
-          ))}
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-white">Funding Requests ({fundingRequests.length})</h2>
+          <button 
+            onClick={fetchFundingRequests}
+            className="text-sm font-bold text-amber-200/80 hover:text-amber-100 uppercase tracking-widest"
+          >
+            Refresh →
+          </button>
         </div>
+        {loading ? (
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-12 text-center">
+            <p className="text-slate-400">Loading funding requests...</p>
+          </div>
+        ) : fundingRequests.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-white/20 bg-white/5 p-12 text-center">
+            <p className="text-slate-400">No funding requests available yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {fundingRequests.map((request) => {
+              const progressPercent = request.amountNeeded > 0 ? Math.min((request.amountNeeded * 0.6) / request.amountNeeded * 100, 100) : 0;
+              return (
+                <div key={request.id} className="rounded-3xl border border-white/10 bg-white/5 overflow-hidden hover:bg-white/[0.08] hover:border-white/20 transition-all shadow-lg hover:shadow-xl">
+                  <div className="bg-gradient-to-r from-amber-600/20 to-orange-600/20 border-b border-white/10 p-6">
+                    <h3 className="text-lg font-bold text-white mb-2">{request.title}</h3>
+                    <p className="text-sm text-amber-200 font-medium">{request.ngoName}</p>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    <p className="text-sm text-slate-300">{request.description.substring(0, 100)}...</p>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-400">Amount Needed</span>
+                        <span className="font-bold text-amber-400">₹{request.amountNeeded.toLocaleString()}</span>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full transition-all"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-xs text-slate-500">
+                        <span>₹{(request.amountNeeded * 0.6).toLocaleString()} raised</span>
+                        <span>{Math.round(progressPercent)}%</span>
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={() => openDonateModal(request)}
+                      className="w-full rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:shadow-xl transition"
+                    >
+                      Donate Now
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Donation Summary Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 rounded-3xl border border-white/10 bg-white/5 p-8">
-          <h2 className="text-2xl font-bold text-white mb-6">Donation Summary</h2>
-          
-          <div className="grid grid-cols-2 gap-6 mb-8 pb-8 border-b border-white/10">
+      {/* Donation History */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-white">Donation History</h2>
+        <div className="rounded-3xl border border-white/10 bg-white/5 overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-8 bg-gradient-to-br from-emerald-600/10 to-teal-600/10 border-b border-white/10">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Total Contributed</p>
-              <p className="text-3xl font-bold text-white">₹{(totalDonated / 100000).toFixed(2)}L</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-emerald-200 mb-2">Total Donations</p>
+              <p className="text-3xl font-bold text-white">₹{(totalDonated / 100000).toFixed(1)}L</p>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Causes Supported</p>
-              <p className="text-3xl font-bold text-amber-400">{new Set(donationHistory.map(d => d.purpose)).size}</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-emerald-200 mb-2">Transactions</p>
+              <p className="text-3xl font-bold text-white">{donationHistory.length}</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-emerald-200 mb-2">Avg. Donation</p>
+              <p className="text-3xl font-bold text-white">₹{donationHistory.length > 0 ? (totalDonated / donationHistory.length / 100000).toFixed(1) : '0'}L</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-emerald-200 mb-2">NGOs Helped</p>
+              <p className="text-3xl font-bold text-white">{new Set(donationHistory.map(d => d.ngoName)).size}</p>
             </div>
           </div>
 
-          <div className="space-y-3">
-            {donationHistory.slice(0, 4).map((donation) => (
-              <div key={donation.id} className="flex items-center justify-between p-4 rounded-2xl hover:bg-white/[0.02] transition">
-                <div>
-                  <p className="text-sm font-bold text-white">{donation.ngoName}</p>
-                  <p className="text-xs text-slate-500">{donation.purpose}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-amber-400">₹{donation.amount.toLocaleString()}</p>
-                  <p className="text-xs text-slate-500">{new Date(donation.date).toLocaleDateString()}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-blue-600/10 to-indigo-600/10 p-8">
-          <h2 className="text-xl font-bold text-white mb-6">Reports</h2>
-          
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-dashed border-white/20 bg-white/5 p-8 flex items-center justify-center text-center">
-              <div>
-                <p className="text-4xl mb-3">📊</p>
-                <p className="text-slate-400 text-sm">[Image: donation analytics chart]</p>
-              </div>
+          {donationHistory.length === 0 ? (
+            <div className="p-8 text-center text-slate-400">
+              <p>No donations yet. Start making an impact today!</p>
             </div>
-
-            <button className="w-full rounded-2xl bg-white/5 border border-white/10 py-3 text-sm font-bold text-white uppercase tracking-widest hover:bg-white/10 transition">
-              Download Report
-            </button>
-          </div>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {donationHistory.map((donation) => (
+                <div key={donation._id} className="flex items-center justify-between p-6 hover:bg-white/[0.02] transition">
+                  <div>
+                    <p className="text-sm font-bold text-white">{donation.ngoName}</p>
+                    <p className="text-xs text-slate-400 mt-1">{new Date(donation.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <span className="text-lg font-bold text-emerald-400">₹{donation.amount.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
