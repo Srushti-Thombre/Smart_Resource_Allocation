@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { HiOutlineUser, HiOutlineMail, HiOutlineLockClosed, HiOutlineBell, HiOutlineShieldCheck, HiOutlineGlobeAlt, HiOutlinePhone, HiOutlineLocationMarker, HiOutlineCheckCircle } from 'react-icons/hi';
+import { HiOutlineUser, HiOutlineMail, HiOutlineLockClosed, HiOutlineBell, HiOutlineShieldCheck, HiOutlineGlobeAlt, HiOutlinePhone, HiOutlineLocationMarker, HiCheckCircle } from 'react-icons/hi';
 import { skillOptions } from '../data/mockData';
 
 export default function ProfilePage() {
@@ -82,7 +82,7 @@ export default function ProfilePage() {
       {showSuccess && (
         <div className="fixed top-10 left-1/2 -translate-x-1/2 z-50 animate-bounce-in">
           <div className="flex items-center gap-3 bg-emerald-500 text-white px-8 py-4 rounded-3xl shadow-2xl shadow-emerald-500/20 border border-white/20">
-            <HiOutlineCheckCircle className="h-6 w-6" />
+            <HiCheckCircle className="h-6 w-6" />
             <span className="font-bold tracking-tight">Profile updated successfully!</span>
           </div>
         </div>

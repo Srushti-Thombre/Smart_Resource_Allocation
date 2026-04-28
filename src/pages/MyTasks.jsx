@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { HiOutlineClipboardCheck, HiOutlineClock, HiOutlineChat, HiOutlineUpload, HiOutlineCheckCircle } from 'react-icons/hi';
+import { HiOutlineClipboardCheck, HiOutlineClock, HiOutlineChat, HiOutlineUpload, HiCheckCircle } from 'react-icons/hi';
 import StatsCard from '../components/StatsCard';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
@@ -143,7 +143,7 @@ export default function MyTasks() {
                 {uploadedFile ? (
                   <>
                     <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
-                      <HiOutlineCheckCircle className="h-6 w-6" />
+                      <HiCheckCircle className="h-6 w-6" />
                     </div>
                     <p className="text-sm font-bold text-white line-clamp-1">{uploadedFile.name}</p>
                     <p className="mt-1 text-[10px] text-emerald-400/60 uppercase tracking-widest">Ready to submit</p>

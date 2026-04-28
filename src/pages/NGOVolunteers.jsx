@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { HiOutlineUserGroup, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineExternalLink, HiOutlineClock } from 'react-icons/hi';
+import { HiOutlineUserGroup, HiCheckCircle, HiOutlineXCircle, HiOutlineExternalLink, HiOutlineClock } from 'react-icons/hi';
 
 export default function NGOVolunteers() {
   const { user, applications, verifyWork } = useAuth();
@@ -137,12 +137,12 @@ export default function NGOVolunteers() {
                           className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition"
                           title="Approve"
                         >
-                          <HiOutlineCheckCircle className="h-5 w-5" />
+                          <HiCheckCircle className="h-5 w-5" />
                         </button>
                       </div>
                     ) : app.status === 'completed' ? (
                       <span className="text-emerald-400 font-bold text-[10px] uppercase tracking-widest flex items-center justify-end gap-1">
-                        <HiOutlineCheckCircle className="h-4 w-4" />
+                        <HiCheckCircle className="h-4 w-4" />
                         Verified
                       </span>
                     ) : (

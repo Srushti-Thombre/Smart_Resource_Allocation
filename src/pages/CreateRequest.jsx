@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { categories, cities } from '../data/mockData';
-import { HiOutlineChevronLeft, HiOutlineCloudUpload, HiOutlineCheckCircle } from 'react-icons/hi';
+import { HiOutlineChevronLeft, HiOutlineCloudUpload, HiCheckCircle } from 'react-icons/hi';
 import { useAuth } from '../context/AuthContext';
 
 export default function CreateRequest() {
@@ -45,7 +45,7 @@ export default function CreateRequest() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center space-y-6 animate-fade-in">
         <div className="h-24 w-24 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30 shadow-glow shadow-emerald-500/20">
-          <HiOutlineCheckCircle className="h-12 w-12" />
+          <HiCheckCircle className="h-12 w-12" />
         </div>
         <div className="space-y-2">
           <h2 className="text-3xl font-bold text-white">Request Published!</h2>

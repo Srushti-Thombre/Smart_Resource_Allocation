@@ -1,196 +1,307 @@
 import { useState } from 'react';
-import { HiOutlineUserGroup, HiOutlineCash, HiOutlineClipboardList, HiOutlinePlus, HiOutlineCheck, HiOutlineX } from 'react-icons/hi';
+import { HiOutlineUserGroup, HiOutlineCash, HiOutlineClipboardList, HiOutlinePlus, HiOutlineX, HiOutlineLocationMarker } from 'react-icons/hi';
 import StatsCard from '../components/StatsCard';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
-import MapDisplay from '../components/MapDisplay';
 
 export default function NGODashboard() {
-  const { user, requests, applications, updateApplicationStatus } = useAuth();
-  const [selectedApp, setSelectedApp] = useState(null);
-  
-  // My active requests
-  const myRequests = requests.filter(r => r.ngoId === user?.id);
+  const { user } = useAuth();
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    location: '',
+    skills: '',
+    urgency: 'medium'
+  });
 
-  // My applications
-  const myApplications = applications.filter(app => app.ngoId === user?.id);
+  // Mock data for active requests
+  const activeRequests = [
+    {
+      id: 1,
+      title: 'Community Food Distribution',
+      location: 'Mumbai, Maharashtra',
+      volunteersJoined: 12,
+      status: 'Open'
+    },
+    {
+      id: 2,
+      title: 'School Infrastructure Project',
+      location: 'Pune, Maharashtra',
+      volunteersJoined: 8,
+      status: 'Open'
+    },
+    {
+      id: 3,
+      title: 'Environmental Clean-up Drive',
+      location: 'Bangalore, Karnataka',
+      volunteersJoined: 15,
+      status: 'Closed'
+    }
+  ];
 
-  const handleReview = (app, status) => {
-    updateApplicationStatus(app.id, status);
-    setSelectedApp(null);
+  // Mock data for donations
+  const donationsReceived = [
+    { id: 1, donor: 'Acme Corporation', amount: 500000, date: '2024-04-25' },
+    { id: 2, donor: 'Tech Solutions Ltd', amount: 250000, date: '2024-04-20' },
+    { id: 3, donor: 'Global Impact Fund', amount: 1000000, date: '2024-04-15' },
+    { id: 4, donor: 'Community Supporters', amount: 75000, date: '2024-04-10' }
+  ];
+
+  const totalDonations = donationsReceived.reduce((sum, d) => sum + d.amount, 0);
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmitRequest = (e) => {
+    e.preventDefault();
+    setShowRequestModal(false);
+    setFormData({ title: '', description: '', location: '', skills: '', urgency: 'medium' });
   };
 
   return (
-    <div className="space-y-10 relative">
-      {/* Review Modal */}
-      {selectedApp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md animate-fade-in">
-          <div className="w-full max-w-md rounded-[2.5rem] border border-white/10 bg-slate-900 p-8 shadow-2xl animate-bounce-in">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-2xl font-bold text-white shadow-glow">
-                {selectedApp.applicantAvatar || selectedApp.applicantName[0]}
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-white">{selectedApp.applicantName}</h3>
-                <p className="text-sm text-slate-400">Applying for: <span className="text-amber-200">{selectedApp.requestTitle}</span></p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="rounded-2xl bg-white/5 p-4 border border-white/5">
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Message from Volunteer</p>
-                <p className="text-sm text-slate-300 leading-relaxed italic">
-                  "I have a background in this field and would love to contribute my time to help the community through this initiative."
-                </p>
-              </div>
-
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => handleReview(selectedApp, 'rejected')}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/5 py-4 text-sm font-bold text-red-400 hover:bg-red-500/10 transition"
-                >
-                  <HiOutlineX className="h-5 w-5" />
-                  Decline
-                </button>
-                <button 
-                  onClick={() => handleReview(selectedApp, 'accepted')}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-4 text-sm font-bold text-slate-950 hover:shadow-lg hover:shadow-emerald-500/20 transition"
-                >
-                  <HiOutlineCheck className="h-5 w-5" />
-                  Approve
-                </button>
-              </div>
+    <div className="space-y-10">
+      {/* Post New Request Modal */}
+      {showRequestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md">
+          <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-slate-900 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 px-8 py-6">
+              <h2 className="text-2xl font-bold text-white">Post New Request</h2>
               <button 
-                onClick={() => setSelectedApp(null)}
-                className="w-full text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 hover:text-white transition"
+                onClick={() => setShowRequestModal(false)}
+                className="rounded-xl p-2 hover:bg-white/10"
               >
-                Decide Later
+                <HiOutlineX className="h-6 w-6 text-slate-400" />
               </button>
             </div>
+
+            <form onSubmit={handleSubmitRequest} className="space-y-6 p-8">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Title</label>
+                <input 
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleFormChange}
+                  placeholder="e.g., Community Outreach Program"
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-slate-500 outline-none focus:border-amber-400/30 focus:bg-white/10"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Description</label>
+                <textarea 
+                  name="description"
+                  value={formData.description}
+                  onChange={handleFormChange}
+                  placeholder="Describe the initiative and its impact..."
+                  rows="4"
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-slate-500 outline-none focus:border-amber-400/30 focus:bg-white/10 resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Location</label>
+                  <input 
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleFormChange}
+                    placeholder="City, Region"
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-slate-500 outline-none focus:border-amber-400/30 focus:bg-white/10"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Urgency</label>
+                  <select 
+                    name="urgency"
+                    value={formData.urgency}
+                    onChange={handleFormChange}
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-amber-400/30 focus:bg-white/10"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Required Skills</label>
+                <input 
+                  type="text"
+                  name="skills"
+                  value={formData.skills}
+                  onChange={handleFormChange}
+                  placeholder="e.g., Teaching, First Aid, Driving"
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-slate-500 outline-none focus:border-amber-400/30 focus:bg-white/10"
+                />
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setShowRequestModal(false)}
+                  className="flex-1 rounded-2xl border border-white/10 py-3 text-sm font-bold uppercase tracking-widest text-white hover:bg-white/5 transition"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 py-3 text-sm font-bold uppercase tracking-widest text-slate-950 shadow-lg shadow-amber-500/20 hover:shadow-xl transition"
+                >
+                  Post Request
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">{user?.name}</h1>
-          <p className="mt-2 text-slate-400">Manage your initiatives and resource requests.</p>
-        </div>
-        <Link 
-          to="/create-request"
-          className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-400 to-amber-500 px-6 py-3.5 text-sm font-bold text-slate-950 transition hover:shadow-lg hover:shadow-amber-500/20"
-        >
-          <HiOutlinePlus className="h-5 w-5" />
-          Create Request
-        </Link>
+
+      {/* Welcome Card */}
+      <div className="rounded-3xl bg-gradient-to-br from-purple-600/20 to-indigo-600/20 border border-purple-500/20 p-8 shadow-lg shadow-purple-500/10">
+        <h1 className="text-3xl font-bold text-white mb-2">Welcome back, {user?.name || 'NGO'}! 👋</h1>
+        <p className="text-slate-300">Manage your initiatives, requests, and donations all in one place.</p>
       </div>
 
+      {/* Stats Cards */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <StatsCard 
           label="Volunteers Engaged" 
-          value={(user?.volunteersEngaged || 0) + myApplications.filter(a => a.status === 'accepted').length} 
+          value="47" 
           icon={HiOutlineUserGroup} 
-          trend={`+${myApplications.filter(a => a.status === 'pending').length} pending`}
+          trend="+12 this month"
           color="purple"
         />
         <StatsCard 
           label="Total Funds Raised" 
-          value={`₹${(user?.fundsRaised || 0).toLocaleString()}`} 
+          value="₹18,50,000" 
           icon={HiOutlineCash} 
-          trend="+₹45,000"
-          color="green"
+          trend="+₹3,50,000 this month"
+          color="amber"
         />
         <StatsCard 
           label="Active Requests" 
-          value={myRequests.length} 
+          value="3" 
           icon={HiOutlineClipboardList} 
           color="blue"
         />
       </div>
 
-      <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr]">
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold text-white">Active Requests</h2>
-          <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/5">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-white/10 bg-white/5 text-xs font-bold uppercase tracking-widest text-slate-500">
-                <tr>
-                  <th className="px-6 py-4">Title</th>
-                  <th className="px-6 py-4">Type</th>
-                  <th className="px-6 py-4">Progress</th>
-                  <th className="px-6 py-4">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {myRequests.map((req) => {
-                  const progress = req.type === 'volunteer' 
-                    ? (req.volunteersJoined / req.volunteersNeeded) * 100 
-                    : (req.fundingRaised / req.fundingGoal) * 100;
-                  
-                  return (
-                    <tr key={req.id} className="transition hover:bg-white/[0.02]">
-                      <td className="px-6 py-5 font-bold text-white">{req.title}</td>
-                      <td className="px-6 py-5">
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest border ${
-                          req.type === 'volunteer' ? 'text-purple-400 border-purple-400/20' : 'text-amber-400 border-amber-400/20'
-                        }`}>
-                          {req.type}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-1.5 w-24 rounded-full bg-white/5 overflow-hidden">
-                            <div className="h-full bg-amber-400" style={{ width: `${Math.min(progress || 0, 100)}%` }} />
-                          </div>
-                          <span className="text-xs font-bold text-slate-400">{Math.round(progress || 0)}%</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-[10px] uppercase tracking-widest">
-                          <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          Active
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+      {/* NGO Profile Section */}
+      <div className="rounded-3xl border border-white/10 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8 bg-white/5">
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-4">About Our Organization</h2>
+            <p className="text-slate-300 leading-relaxed mb-6">
+              Our NGO is dedicated to creating positive social impact through community engagement and resource mobilization. We work across multiple sectors including education, healthcare, and environmental conservation.
+            </p>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <HiOutlineLocationMarker className="h-5 w-5 text-amber-400" />
+                <span className="text-slate-300">Based in Mumbai, Maharashtra</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <HiOutlineUserGroup className="h-5 w-5 text-amber-400" />
+                <span className="text-slate-300">Team of 25+ dedicated professionals</span>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-dashed border-white/20 bg-white/5 flex items-center justify-center p-8 text-center">
+            <div>
+              <p className="text-6xl mb-4">🏢</p>
+              <p className="text-slate-400 text-sm">[Image: NGO team working on ground]</p>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-8">
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-white">Registered Location</h2>
-            <MapDisplay address={user?.address || '12, Dharavi Main Road, near Sion Station, Mumbai'} />
+        <div className="border-t border-white/10 px-8 py-6 bg-white/[0.02] flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Ready to post a new initiative?</p>
+            <p className="text-sm text-slate-300">Create a request to connect with volunteers and donors.</p>
+          </div>
+          <button 
+            onClick={() => setShowRequestModal(true)}
+            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-6 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 hover:shadow-xl transition whitespace-nowrap"
+          >
+            <HiOutlinePlus className="h-5 w-5" />
+            Post Request
+          </button>
+        </div>
+      </div>
+
+      {/* Active Requests Section */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-white">Active Requests</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {activeRequests.map((request) => (
+            <div key={request.id} className="rounded-3xl border border-white/10 bg-white/5 overflow-hidden hover:bg-white/[0.08] hover:border-white/20 transition-all shadow-lg hover:shadow-xl hover:shadow-white/5">
+              <div className="rounded-t-2xl bg-slate-900 border-b border-white/10 p-6 min-h-24 flex items-center justify-center text-center">
+                <p className="text-slate-400 text-sm">[Image: {request.title}]</p>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-2">{request.title}</h3>
+                  <div className="flex items-center gap-2 text-sm text-slate-400 mb-3">
+                    <HiOutlineLocationMarker className="h-4 w-4 text-amber-400" />
+                    {request.location}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-400">Volunteers Joined</span>
+                    <span className="font-bold text-white">{request.volunteersJoined}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${
+                    request.status === 'Open' 
+                      ? 'bg-emerald-500/10 text-emerald-400' 
+                      : 'bg-slate-500/10 text-slate-400'
+                  }`}>
+                    {request.status}
+                  </span>
+                  <button className="text-amber-400 text-sm font-bold hover:text-amber-300 transition">View Details →</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Donations Received Section */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-white">Donations Received</h2>
+        <div className="rounded-3xl border border-white/10 bg-white/5 overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8 bg-gradient-to-br from-amber-600/10 to-orange-600/10 border-b border-white/10">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-amber-200 mb-2">Total Raised</p>
+              <p className="text-3xl font-bold text-white">₹{(totalDonations / 100000).toFixed(1)}L</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-amber-200 mb-2">Total Donors</p>
+              <p className="text-3xl font-bold text-white">{donationsReceived.length}</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-amber-200 mb-2">Avg. Donation</p>
+              <p className="text-3xl font-bold text-white">₹{(totalDonations / donationsReceived.length / 100000).toFixed(1)}L</p>
+            </div>
           </div>
 
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-white">Recent Applications</h2>
-            <div className="space-y-4">
-              {myApplications.filter(a => a.status === 'pending').length > 0 ? (
-                myApplications.filter(a => a.status === 'pending').map((app) => (
-                  <div key={app.id} className="flex items-center gap-4 rounded-3xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/[0.07]">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 border border-white/10 flex items-center justify-center text-xs font-bold text-white">
-                      {app.applicantAvatar || app.applicantName[0]}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-white">{app.applicantName}</p>
-                      <p className="text-[11px] text-slate-500">Applied for: {app.requestTitle}</p>
-                    </div>
-                    <button 
-                      onClick={() => setSelectedApp(app)}
-                      className="rounded-xl bg-amber-400/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-200 hover:bg-amber-400/20 transition"
-                    >
-                      Review
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div className="py-10 text-center rounded-3xl border border-dashed border-white/5 text-slate-500 text-sm">
-                  {myApplications.length > 0 ? 'All applications reviewed!' : 'No new applications yet.'}
+          <div className="divide-y divide-white/5">
+            {donationsReceived.map((donation) => (
+              <div key={donation.id} className="flex items-center justify-between p-6 hover:bg-white/[0.02] transition">
+                <div>
+                  <p className="text-sm font-bold text-white">{donation.donor}</p>
+                  <p className="text-xs text-slate-400 mt-1">{new Date(donation.date).toLocaleDateString()}</p>
                 </div>
-              )}
-            </div>
+                <span className="text-lg font-bold text-amber-400">₹{donation.amount.toLocaleString()}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
