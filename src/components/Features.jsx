@@ -10,9 +10,9 @@ const features = [
     icon: '🛡️',
   },
   {
-    title: 'Transparent Donations',
-    description: 'Track where your contributions go with full transparency.',
-    icon: '💰',
+    title: 'AI Heatmap',
+    description: 'Visualize high-need zones with real-time geographic demand analysis.',
+    icon: '🔥',
   },
 ];
 

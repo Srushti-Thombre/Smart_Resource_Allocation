@@ -1,4 +1,5 @@
 import { HiOutlineExternalLink, HiOutlineSparkles, HiOutlineShare } from 'react-icons/hi';
+import HeatmapDisplay from '../components/HeatmapDisplay';
 
 export default function ImpactFeed() {
   const reports = [
@@ -27,6 +28,11 @@ export default function ImpactFeed() {
       <div>
         <h1 className="text-4xl font-bold text-white tracking-tight">CSR Impact Feed</h1>
         <p className="mt-2 text-slate-400">Review the real-world results of your company's social contributions.</p>
+      </div>
+
+      <div className="space-y-6">
+        <h2 className="text-xl font-bold text-white tracking-tight">Regional Impact Analysis</h2>
+        <HeatmapDisplay />
       </div>
 
       <div className="grid gap-10 lg:grid-cols-2">
