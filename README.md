@@ -63,3 +63,4 @@ Tailored, role-specific experiences for the three pillars of social impact:
 
 Deployment Link:
 admirable-rugelach-cc5193.netlify.app
+https://smart-resource-allocatio-33b1f.web.app
